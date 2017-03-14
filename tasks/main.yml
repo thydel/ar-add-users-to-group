@@ -1,0 +1,20 @@
+---
+
+- set_fact: { debug: '{{ debug | default(False) }}' }
+
+- getent: { database: group, key: '{{ group }}' }
+  name: Get users already in group {{ group }}
+
+- set_fact: { missing_users: '{{ users | difference(getent_group[group][2].split(",")) }}' }
+  name: Find users not yet in group {{ group }}
+
+- { debug: { var: missing_users }, when: debug }
+
+- user:
+    name: '{{ user }}'
+    groups: '{{ group }}'
+    append: True
+  with_items: '{{ missing_users }}'
+  loop_control: { loop_var: user }
+  become: True
+  name: add missing users to group {{ group }}
